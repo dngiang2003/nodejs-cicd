@@ -37,5 +37,14 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
+
+            echo "Xoá container đang chạy (nếu có)..."
+            docker ps -a --filter "ancestor=${{ secrets.DOCKERHUB_USERNAME }}/nodejs-cicd:latest" -q | xargs -r docker stop | xargs -r docker rm
+
+            echo "Xoá các image cũ ngoại trừ latest..."
+            docker images "${{ secrets.DOCKERHUB_USERNAME }}/nodejs-cicd" --format "{{.Repository}}:{{.Tag}} {{.ID}}" | \
+              grep -v "latest" | awk '{print $2}' | xargs -r docker rmi || true
+
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/nodejs-cicd:latest
             docker run -d -p 3012:3000 ${{ secrets.DOCKERHUB_USERNAME }}/nodejs-cicd:latest
+            - name: Dọn dẹp Docker image cũ
